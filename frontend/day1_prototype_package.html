@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIDS Member 2 - Package B01 Publishing System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .badge-draft { background-color: #f3f4f6; color: #374151; }
+        .badge-published { background-color: #d1fae5; color: #065f46; }
+        .badge-expired { background-color: #fee2e2; color: #991b1b; }
+        .badge-future { background-color: #e0e7ff; color: #3730a3; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <header class="bg-indigo-900 text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold">University Information Display System (UIDS)</h1>
+                <p class="text-xs text-indigo-200">Member 2: Publishing & Event Workflow (Package B01)</p>
+            </div>
+            <div class="text-right text-xs bg-indigo-800 p-2 rounded">
+                <div><strong>Server Timezone:</strong> KST (UTC+09:00)</div>
+                <div><strong>Current Simulated Server Time:</strong> <span id="kst-clock" class="font-mono text-yellow-300"></span></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-6">
+        <!-- Controls & Navigation -->
+        <div class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div class="flex space-x-2">
+                <button onclick="switchTab('public')" id="tab-public" class="px-4 py-2 rounded font-medium text-sm bg-indigo-600 text-white">Public Endpoint (Member 4 Contract)</button>
+                <button onclick="switchTab('author')" id="tab-author" class="px-4 py-2 rounded font-medium text-sm bg-gray-100 text-gray-700 hover:bg-gray-200">Author Workspace</button>
+                <button onclick="switchTab('management')" id="tab-management" class="px-4 py-2 rounded font-medium text-sm bg-gray-100 text-gray-700 hover:bg-gray-200">Management & Review Queue</button>
+            </div>
+            <button onclick="runBrowserTests()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded font-medium text-sm flex items-center gap-2">
+                <span>▶ Run Package B01 Test Suite</span>
+            </button>
+        </div>
+
+        <!-- Test Results Output Panel -->
+        <div id="test-output-panel" class="hidden bg-slate-900 text-slate-100 p-4 rounded-lg shadow font-mono text-xs">
+            <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
+                <span class="font-bold text-slate-300">Package B01 Automated Test Runner Output</span>
+                <button onclick="document.getElementById('test-output-panel').classList.add('hidden')" class="text-slate-400 hover:text-white">✕ Close</button>
+            </div>
+            <div id="test-logs" class="space-y-1"></div>
+        </div>
+
+        <!-- TAB 1: Public Read Contract -->
+        <section id="view-public" class="space-y-4">
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded text-sm text-amber-800">
+                <strong>Safe Read Contract (Member 4 Integration):</strong> Automatically enforces request-time boundaries (`publishStart <= KST <= publishEnd`). Excludes DRAFTs, REJECTED, and EXPIRED notices regardless of background worker status.
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">Active Public Notices</h2>
+                    <span id="public-count" class="text-xs font-semibold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">0 Notices Served</span>
+                </div>
+                <div id="public-list" class="grid gap-4 md:grid-cols-2"></div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Author Workspace -->
+        <section id="view-author" class="hidden space-y-4">
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">POST /api/notices - Create Draft Notice</h2>
+                <form id="draft-form" onsubmit="handleCreateDraft(event)" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Notice Title *</label>
+                            <input type="text" id="draft-title" required class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Category *</label>
+                            <select id="draft-category" required class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                                <option value="Academic">Academic</option>
+                                <option value="Facility">Facility</option>
+                                <option value="Event">Event</option>
+                                <option value="Notice">Notice</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Department *</label>
+                            <input type="text" id="draft-department" required value="Smart Computing Dept" class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Author Email *</label>
+                            <input type="email" id="draft-author" required value="author@uids.ac.kr" class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700">Summary *</label>
+                        <input type="text" id="draft-summary" required class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700">Body Content *</label>
+                        <textarea id="draft-body" rows="3" required class="w-full mt-1 p-2 border border-gray-300 rounded text-sm"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Publish Start Time (KST)</label>
+                            <input type="datetime-local" id="draft-start" class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700">Publish End Time (KST)</label>
+                            <input type="datetime-local" id="draft-end" class="w-full mt-1 p-2 border border-gray-300 rounded text-sm">
+                        </div>
+                    </div>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-medium">Create Draft Notice</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 3: Management Queue -->
+        <section id="view-management" class="hidden space-y-4">
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">GET /api/notices/management - Master State Queue</h2>
+                    <span id="mgmt-count" class="text-xs font-semibold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">0 Total Records</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 font-semibold border-b">
+                            <tr>
+                                <th class="p-3">ID / Title</th>
+                                <th class="p-3">Author</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3">Version</th>
+                                <th class="p-3">Publication Window (KST)</th>
+                                <th class="p-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mgmt-table-body" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Data Repository (In-Memory State Engine)
+        let noticesStore = [
+            {
+                id: "notice-001",
+                title: "Spring Semester Course Registration Guidelines",
+                summary: "Important guidelines for course registration and add/drop periods.",
+                body: "All undergraduate students must review the course catalog before registration opens.",
+                category: "Academic",
+                department: "Registrar Office",
+                status: "DRAFT",
+                author: "prof.kim@uids.ac.kr",
+                priority: "normal",
+                publishStart: "2026-03-01T00:00:00+09:00",
+                publishEnd: "2026-03-31T23:59:59+09:00",
+                version: 1,
+                updatedAt: "2026-02-20T10:00:00+09:00"
+            },
+            {
+                id: "notice-002",
+                title: "Campus Library Extended Operating Hours",
+                summary: "Central Library will remain open 24/7 during midterm examination weeks.",
+                body: "To support students during midterms, reading rooms will be open around the clock.",
+                category: "Facility",
+                department: "University Library",
+                status: "PUBLISHED",
+                author: "library@uids.ac.kr",
+                priority: "pinned",
+                publishStart: "2026-02-01T00:00:00+09:00",
+                publishEnd: "2026-12-31T23:59:59+09:00",
+                version: 1,
+                updatedAt: "2026-02-01T08:00:00+09:00"
+            },
+            {
+                id: "notice-003",
+                title: "Future Tech Symposium 2026 Announcement",
+                summary: "Annual symposium featuring AI and robotics keynotes scheduled for next semester.",
+                body: "Registration details and speaker lists will be released soon.",
+                category: "Event",
+                department: "Smart Computing Dept",
+                status: "PUBLISHED",
+                author: "admin@uids.ac.kr",
+                priority: "normal",
+                publishStart: "2026-11-01T00:00:00+09:00",
+                publishEnd: "2026-11-30T23:59:59+09:00",
+                version: 1,
+                updatedAt: "2026-02-15T09:00:00+09:00"
+            },
+            {
+                id: "notice-004",
+                title: "Winter Break Campus Shuttle Schedule",
+                summary: "Shuttle bus routes and timetables effective during winter recess.",
+                body: "Shuttles will operate on a reduced schedule every 45 minutes.",
+                category: "Notice",
+                department: "Campus Operations",
+                status: "PUBLISHED",
+                author: "ops@uids.ac.kr",
+                priority: "normal",
+                publishStart: "2025-12-01T00:00:00+09:00",
+                publishEnd: "2026-02-28T23:59:59+09:00",
+                version: 1,
+                updatedAt: "2025-11-25T14:30:00+09:00"
+            }
+        ];
+
+        // API Endpoint Simulation Logic
+        const API = {
+            // POST /api/notices (Create Draft)
+            createDraft: (payload) => {
+                if (!payload.title || !payload.summary || !payload.body || !payload.category || !payload.department || !payload.author) {
+                    return { status: 400, error: 'Missing required fields' };
+                }
+                const newNotice = {
+                    id: `notice-${Date.now()}`,
+                    title: payload.title,
+                    summary: payload.summary,
+                    body: payload.body,
+                    category: payload.category,
+                    department: payload.department,
+                    status: 'DRAFT',
+                    author: payload.author,
+                    priority: payload.priority || 'normal',
+                    publishStart: payload.publishStart || new Date().toISOString(),
+                    publishEnd: payload.publishEnd || new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+                    version: 1,
+                    updatedAt: new Date().toISOString()
+                };
+                noticesStore.push(newNotice);
+                return { status: 201, data: newNotice };
+            },
+
+            // GET /api/notices/public (Safe Read Contract for Member 4)
+            getPublicNotices: () => {
+                const kstNow = new Date();
+                const filtered = noticesStore.filter(n => {
+                    if (n.status !== 'PUBLISHED') return false;
+                    const start = new Date(n.publishStart);
+                    const end = new Date(n.publishEnd);
+                    return kstNow >= start && kstNow <= end;
+                });
+                return { status: 200, count: filtered.length, data: filtered };
+            },
+
+            // GET /api/notices/management
+            getManagementNotices: () => {
+                return { status: 200, count: noticesStore.length, data: noticesStore };
+            },
+
+            // PUT /api/notices/:id (Update with Version Overwrite Check)
+            updateNotice: (id, payload) => {
+                const notice = noticesStore.find(n => n.id === id);
+                if (!notice) return { status: 404, error: 'Notice not found' };
+
+                if (payload.version !== undefined && payload.version !== notice.version) {
+                    return {
+                        status: 409,
+                        error: `Conflict detected: Submitted version (${payload.version}) does not match current version (${notice.version})`
+                    };
+                }
+
+                if (payload.title) notice.title = payload.title;
+                if (payload.status) notice.status = payload.status;
+                notice.version += 1;
+                notice.updatedAt = new Date().toISOString();
+
+                return { status: 200, data: notice };
+            }
+        };
+
+        // UI View Rendering Logic
+        function renderClock() {
+            const now = new Date();
+            document.getElementById('kst-clock').innerText = now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' });
+        }
+        setInterval(renderClock, 1000);
+        renderClock();
+
+        function switchTab(tab) {
+            ['public', 'author', 'management'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "px-4 py-2 rounded font-medium text-sm bg-gray-100 text-gray-700 hover:bg-gray-200";
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = "px-4 py-2 rounded font-medium text-sm bg-indigo-600 text-white";
+            refreshViews();
+        }
+
+        function refreshViews() {
+            // Render Public View
+            const publicRes = API.getPublicNotices();
+            document.getElementById('public-count').innerText = `${publicRes.count} Notices Served`;
+            const publicList = document.getElementById('public-list');
+            publicList.innerHTML = publicRes.data.map(n => `
+                <div class="border border-gray-200 p-4 rounded-lg bg-white shadow-sm hover:shadow transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-semibold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-800">${n.category}</span>
+                        <span class="text-xs text-gray-400 font-mono">v${n.version}</span>
+                    </div>
+                    <h3 class="font-bold text-base text-gray-900 mb-1">${n.title}</h3>
+                    <p class="text-xs text-gray-600 mb-3">${n.summary}</p>
+                    <div class="text-[11px] text-gray-400 border-t pt-2 flex justify-between">
+                        <span>${n.department}</span>
+                        <span>Expires: ${new Date(n.publishEnd).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('') || '<div class="col-span-2 text-center text-gray-400 py-8">No active notices match public boundary rules.</div>';
+
+            // Render Management Table
+            const mgmtRes = API.getManagementNotices();
+            document.getElementById('mgmt-count').innerText = `${mgmtRes.count} Total Records`;
+            const mgmtBody = document.getElementById('mgmt-table-body');
+            mgmtBody.innerHTML = mgmtRes.data.map(n => {
+                const now = new Date();
+                const start = new Date(n.publishStart);
+                const end = new Date(n.publishEnd);
+                let badgeClass = 'badge-draft';
+                let stateLabel = n.status;
+
+                if (n.status === 'PUBLISHED') {
+                    if (now < start) { badgeClass = 'badge-future'; stateLabel = 'SCHEDULED'; }
+                    else if (now > end) { badgeClass = 'badge-expired'; stateLabel = 'EXPIRED'; }
+                    else { badgeClass = 'badge-published'; }
+                }
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3">
+                            <div class="font-semibold text-gray-900">${n.title}</div>
+                            <div class="text-[10px] text-gray-400 font-mono">${n.id}</div>
+                        </td>
+                        <td class="p-3">${n.author}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${badgeClass}">${stateLabel}</span></td>
+                        <td class="p-3 font-mono">v${n.version}</td>
+                        <td class="p-3 text-[11px]">
+                            <div>Start: ${new Date(n.publishStart).toLocaleDateString()}</div>
+                            <div>End: ${new Date(n.publishEnd).toLocaleDateString()}</div>
+                        </td>
+                        <td class="p-3">
+                            ${n.status === 'DRAFT' ? `<button onclick="approveNotice('${n.id}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[11px] hover:bg-emerald-700">Approve & Publish</button>` : '<span class="text-gray-400 text-[11px]">No Actions</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function handleCreateDraft(e) {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('draft-title').value,
+                category: document.getElementById('draft-category').value,
+                department: document.getElementById('draft-department').value,
+                author: document.getElementById('draft-author').value,
+                summary: document.getElementById('draft-summary').value,
+                body: document.getElementById('draft-body').value,
+                publishStart: document.getElementById('draft-start').value ? new Date(document.getElementById('draft-start').value).toISOString() : null,
+                publishEnd: document.getElementById('draft-end').value ? new Date(document.getElementById('draft-end').value).toISOString() : null
+            };
+
+            const res = API.createDraft(payload);
+            if (res.status === 201) {
+                alert('Draft created successfully!');
+                document.getElementById('draft-form').reset();
+                switchTab('management');
+            }
+        }
+
+        function approveNotice(id) {
+            const notice = noticesStore.find(n => n.id === id);
+            if (notice) {
+                API.updateNotice(id, { status: 'PUBLISHED', version: notice.version });
+                refreshViews();
+            }
+        }
+
+        // Integrated Test Suite Execution
+        function runBrowserTests() {
+            const panel = document.getElementById('test-output-panel');
+            const logs = document.getElementById('test-logs');
+            panel.classList.remove('hidden');
+            logs.innerHTML = '';
+
+            function log(msg, type = 'info') {
+                const color = type === 'pass' ? 'text-emerald-400' : (type === 'fail' ? 'text-rose-400' : 'text-slate-300');
+                logs.innerHTML += `<div class="${color}">${msg}</div>`;
+            }
+
+            log("🚀 Starting Package B01 Validation Suite...", 'info');
+
+            // Test Case 1: Create Draft
+            const draftRes = API.createDraft({
+                title: 'Test Draft', summary: 'Test', body: 'Test body', category: 'Academic', department: 'CS', author: 'test@uids.ac.kr'
+            });
+            if (draftRes.status === 201 && draftRes.data.status === 'DRAFT') {
+                log("✔ TEST 1 PASSED: Author created a valid draft notice.", 'pass');
+            } else {
+                log("✖ TEST 1 FAILED: Could not create draft.", 'fail');
+            }
+
+            // Test Case 2: Public boundary isolation
+            const publicRes = API.getPublicNotices();
+            const hasDraft = publicRes.data.some(n => n.status === 'DRAFT');
+            const hasExpired = publicRes.data.some(n => n.id === 'notice-004');
+            if (!hasDraft && !hasExpired) {
+                log("✔ TEST 2 PASSED: Public endpoint returns active items only (No draft or expired leaks).", 'pass');
+            } else {
+                log("✖ TEST 2 FAILED: Public endpoint leaked drafts or expired items.", 'fail');
+            }
+
+            // Test Case 3: Version conflict rejection
+            const conflictRes = API.updateNotice('notice-002', { title: 'Illegal Overwrite', version: 99 });
+            if (conflictRes.status === 409) {
+                log("✔ TEST 3 PASSED: Rejection of unapproved stale overwrite attempts (409 Conflict).", 'pass');
+            } else {
+                log("✖ TEST 3 FAILED: Stale overwrite check failed.", 'fail');
+            }
+
+            log("🎉 All Package B01 boundary and scenario tests completed.", 'info');
+        }
+
+        // Initial Load
+        refreshViews();
+    </script>
+</body>
+</html>
