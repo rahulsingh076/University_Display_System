@@ -1,0 +1,11 @@
+.m4-bell { position: relative; flex: 0 0 auto; }
+.m4-bell summary { position: relative; display: grid; place-items: center; cursor: pointer; list-style: none; min-width: 44px; min-height: 44px; }
+.m4-bell summary::-webkit-details-marker { display: none; }
+.m4-bell-count { position: absolute; top: 0; right: 0; background: #b91c1c; color: white; border-radius: 999px; padding: 2px 5px; font-size: 11px; font-weight: 700; }
+.m4-bell-panel, .m4-bell-toast { background: #fff; color: #172033; border: 1px solid #cbd5e1; border-radius: 10px; box-shadow: 0 8px 24px #0002; padding: 14px; width: min(300px, calc(100vw - 32px)); box-sizing: border-box; z-index: 1000; }
+.m4-bell-panel { position: absolute; right: 0; top: 100%; display: grid; gap: 8px; }
+.m4-bell-panel button, .m4-bell-toast button { font: inherit; color: inherit; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; cursor: pointer; text-align: left; overflow-wrap: anywhere; }
+.m4-bell-panel button.m4-unread { font-weight: 700; background: #e0edff; }
+.m4-bell-panel button:disabled { cursor: default; opacity: .7; }
+.m4-bell-toast { position: fixed; right: 16px; bottom: 20px; border-left: 4px solid #2563eb; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .m4-bell-panel { position: fixed; top: auto; right: 16px; } }

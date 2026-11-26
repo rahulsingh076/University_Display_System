@@ -3,6 +3,7 @@ import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import { pendingCount } from '../../api/notices';
 import Icon from '../ui/Icon';
+import NotificationBell from '../../member4/notifications/NotificationBell.jsx';
 import { humanize } from '../../lib/labels';
 
 /** Role-specific tools stay in the account menu; the server enforces access. */
@@ -56,6 +57,7 @@ export default function NavBar() {
           <NavLink to="/" end>Home</NavLink><NavLink to="/notices">Notices</NavLink><NavLink to="/events">Events</NavLink><NavLink to="/professors">Directory</NavLink><NavLink to="/items">Lost &amp; found</NavLink><NavLink className="nav-search" to="/search?source=all"><Icon name="search" size={17} /><span>Search</span></NavLink>
         </nav>
         <div className="nav-controls">
+          <NotificationBell ownerId={user && (user.id || user._id)} />
           {user ? (
             <details ref={accountMenuRef} className="account-menu" key={location.pathname} onKeyDown={(event) => {
               if (event.key === 'Escape' && event.currentTarget.open) {

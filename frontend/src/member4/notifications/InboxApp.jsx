@@ -31,7 +31,7 @@ function AccountInbox() {
   }, [location.state?.focusReturn, inbox.loading]);
   async function change(id, action) {
     setPending(id); setError('');
-    try { await action(); inbox.reload(); }
+    try { await action(); inbox.reload(); window.dispatchEvent(new Event('member4:inbox-changed')); }
     catch (failure) { setError(failure.message); }
     finally { setPending(''); }
   }
@@ -39,6 +39,7 @@ function AccountInbox() {
     setPending(id); setError('');
     try {
       const destination = await openNotification(id);
+      window.dispatchEvent(new Event('member4:inbox-changed'));
       if (active.current) navigate(destination.href, { state: { returnTo: '/notifications' } });
     } catch (failure) {
       if (active.current) { setError(failure.message); inbox.reload(); }
